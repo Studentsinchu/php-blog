@@ -1,0 +1,1 @@
+This is a basic PHP project set up with Git version control.
