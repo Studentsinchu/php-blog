@@ -1,29 +1,17 @@
 <?php
-session_start();
+include 'config/db.php';
 
-// Redirect if not logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-$conn = mysqli_connect("localhost", "root", "", "php-blog");
-
-if (isset($_POST['submit'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $title = mysqli_real_escape_string($conn, $_POST['title']);
     $content = mysqli_real_escape_string($conn, $_POST['content']);
-    $user_id = $_SESSION['user_id'];
 
-    if (!empty($title) && !empty($content)) {
-        $sql = "INSERT INTO posts (title, content, user_id, created_at) VALUES ('$title', '$content', '$user_id', NOW())";
-        if (mysqli_query($conn, $sql)) {
-            header("Location: index.php");
-            exit();
-        } else {
-            echo "Error: " . mysqli_error($conn);
-        }
+    $query = "INSERT INTO posts (title, content) VALUES ('$title', '$content')";
+
+    if (mysqli_query($conn, $query)) {
+        header("Location: index.php");
+        exit();
     } else {
-        echo "Title and Content are required!";
+        echo "Error: " . mysqli_error($conn);
     }
 }
 ?>
@@ -31,18 +19,20 @@ if (isset($_POST['submit'])) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Create Post</title>
+    <title>Create New Post</title>
 </head>
 <body>
-    <h1>Create New Post</h1>
+    <h1>Create New Blog Post</h1>
     <form method="POST" action="">
         <label>Title:</label><br>
         <input type="text" name="title" required><br><br>
+
         <label>Content:</label><br>
-        <textarea name="content" rows="6" cols="50" required></textarea><br><br>
-        <input type="submit" name="submit" value="Publish">
+        <textarea name="content" rows="5" cols="30" required></textarea><br><br>
+
+        <input type="submit" value="Create Post">
     </form>
     <br>
-    <a href="index.php">← Back to Posts</a>
+    <a href="index.php">Back to Posts</a>
 </body>
 </html>

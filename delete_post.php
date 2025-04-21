@@ -1,29 +1,28 @@
+
 <?php
 session_start();
 
+// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header('Location: login.php');
     exit();
 }
 
-$conn = mysqli_connect("localhost", "root", "", "php-blog");
+include 'config/db.php';
 
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
-}
+// Check if ID is provided
+if (isset($_GET['id'])) {
+    $post_id = $_GET['id'];
 
-$post_id = $_GET['id'] ?? null;
+    // Delete post query
+    $sql = "DELETE FROM posts WHERE id = $post_id";
 
-if ($post_id) {
-    // Only delete if the post belongs to the logged-in user
-    $sql = "DELETE FROM posts WHERE id='$post_id' AND user_id=" . $_SESSION['user_id'];
     if (mysqli_query($conn, $sql)) {
-        header("Location: index.php");
-        exit();
+        header('Location: index.php');
     } else {
         echo "Error deleting post: " . mysqli_error($conn);
     }
 } else {
-    echo "Invalid post ID.";
+    echo "Invalid request!";
 }
 ?>
