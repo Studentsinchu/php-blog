@@ -1,38 +1,38 @@
 <?php
-include 'config/db.php';
+session_start();
+include 'config/db.php'; // Include your database connection
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $title = mysqli_real_escape_string($conn, $_POST['title']);
-    $content = mysqli_real_escape_string($conn, $_POST['content']);
+if (!isset($_SESSION['user_id'])) {
+    echo "Access denied.";
+    exit;
+}
 
-    $query = "INSERT INTO posts (title, content) VALUES ('$title', '$content')";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $title = trim($_POST['title']);
+    $content = trim($_POST['content']);
 
-    if (mysqli_query($conn, $query)) {
-        header("Location: index.php");
-        exit();
+    // Server-side validation
+    if (empty($title) || empty($content)) {
+        echo "Title and content are required.";
+        exit;
+    }
+
+    // Prepare statement to prevent SQL injection
+    $stmt = $pdo->prepare("INSERT INTO posts (title, content, user_id) VALUES (:title, :content, :user_id)");
+    $stmt->bindParam(':title', $title);
+    $stmt->bindParam(':content', $content);
+    $stmt->bindParam(':user_id', $_SESSION['user_id']);
+
+    if ($stmt->execute()) {
+        echo "Post created successfully!";
     } else {
-        echo "Error: " . mysqli_error($conn);
+        echo "Failed to create post.";
     }
 }
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create New Post</title>
-</head>
-<body>
-    <h1>Create New Blog Post</h1>
-    <form method="POST" action="">
-        <label>Title:</label><br>
-        <input type="text" name="title" required><br><br>
-
-        <label>Content:</label><br>
-        <textarea name="content" rows="5" cols="30" required></textarea><br><br>
-
-        <input type="submit" value="Create Post">
-    </form>
-    <br>
-    <a href="index.php">Back to Posts</a>
-</body>
-</html>
+<form method="POST" action="">
+    Title: <input type="text" name="title" required>
+    Content: <textarea name="content" required></textarea>
+    <input type="submit" value="Create Post">
+</form>

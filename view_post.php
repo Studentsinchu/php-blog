@@ -1,46 +1,26 @@
 <?php
 session_start();
+include 'config/db.php'; // Include your database connection
 
-// Redirect if not logged in
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit();
-}
+// Fetch posts from the database
+$stmt = $pdo->query("SELECT posts.id, posts.title, posts.content, posts.created_at, users.username FROM posts JOIN users ON posts.user_id = users.id ORDER BY created_at DESC");
+$posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-include 'config/db.php';
-
-// Check if post ID is provided
-if (!isset($_GET['id'])) {
-    echo "Post not found!";
-    exit();
-}
-
-$post_id = $_GET['id'];
-
-// Fetch the post from the database
-$sql = "SELECT * FROM posts WHERE id = $post_id";
-$result = mysqli_query($conn, $sql);
-
-if (mysqli_num_rows($result) == 1) {
-    $post = mysqli_fetch_assoc($result);
+if (empty($posts)) {
+    echo "<p>No posts available.</p>";
 } else {
-    echo "Post not found!";
-    exit();
+    foreach ($posts as $post) {
+        echo "<h2>" . htmlspecialchars($post['title']) . "</h2>";
+        echo "<p>" . nl2br(htmlspecialchars($post['content'])) . "</p>";
+        echo "<p><em>Posted by " . htmlspecialchars($post['username']) . " on " . $post['created_at'] . "</em></p>";
+        
+        // Edit and Delete Links
+        echo "<p>";
+        echo "<a href='edit_post.php?id=" . htmlspecialchars($post['id']) . "'>Edit</a> | ";
+        echo "<a href='delete_post.php?id=" . htmlspecialchars($post['id']) . "' onclick='return confirm(\"Are you sure you want to delete this post?\");'>Delete</a>";
+        echo "</p>";
+        
+        echo "<hr>";
+    }
 }
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title><?php echo htmlspecialchars($post['title']); ?></title>
-</head>
-<body>
-
-<h2><?php echo htmlspecialchars($post['title']); ?></h2>
-<p><?php echo nl2br(htmlspecialchars($post['content'])); ?></p>
-
-<a href="index.php">⬅ Back to Post List</a>
-
-</body>
-</html>

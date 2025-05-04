@@ -1,12 +1,13 @@
 <?php
-$host = "localhost";
-$username = "root";
-$password = "";
-$database = "php-blog";  // Make sure this is your exact database name
+$host = 'localhost'; // Database host
+$db = 'php-blog'; // Your database name
+$user = 'root'; // Your database username
+$pass = ''; // Your database password
 
-$conn = mysqli_connect($host, $username, $password, $database);
-
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo "Connection failed: " . $e->getMessage();
 }
 ?>

@@ -1,42 +1,43 @@
 <?php
 session_start();
-$conn = new mysqli("localhost", "root", "", "php-blog");
+include 'config/db.php'; // Include your database connection
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST["username"];
-    $password = $_POST["password"];
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
-    $stmt = $conn->prepare("SELECT id, password FROM users WHERE username = ?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $stmt->store_result();
-    
-    if ($stmt->num_rows === 1) {
-        $stmt->bind_result($user_id, $hashed_password);
-        $stmt->fetch();
-        if (password_verify($password, $hashed_password)) {
-            $_SESSION["user_id"] = $user_id;
-            $_SESSION["username"] = $username;
-            header("Location: index.php");
-            exit;
-        } else {
-            echo "Invalid password.";
-        }
-    } else {
-        echo "Invalid username.";
+    // Server-side validation
+    if (empty($username) || empty($password)) {
+        echo "Username and password are required.";
+        exit;
     }
-    $stmt->close();
+
+    // Prepare statement to prevent SQL injection
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
+    $stmt->bindParam(':username', $username);
+    $stmt->execute();
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Verify password
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['role'] = $user['role']; // Store user role in session
+
+        // Redirect based on role
+        if ($user['role'] === 'admin') {
+            header("Location: admin_dashboard.php"); // Redirect to admin dashboard
+        } else {
+            header("Location: user_dashboard.php"); // Redirect to user dashboard
+        }
+        exit;
+    } else {
+        echo "Invalid username or password.";
+    }
 }
 ?>
 
-<!-- HTML Form -->
-<h2>Login</h2>
-<form method="post" action="">
-    <label>Username:</label>
-    <input type="text" name="username" required><br><br>
-
-    <label>Password:</label>
-    <input type="password" name="password" required><br><br>
-
+<form method="POST" action="">
+    Username: <input type="text" name="username" required>
+    Password: <input type="password" name="password" required>
     <input type="submit" value="Login">
 </form>

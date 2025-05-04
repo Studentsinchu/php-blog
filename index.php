@@ -1,56 +1,89 @@
 <?php
 session_start();
+require_once 'config/db.php';
 
-// Redirect to login if user not logged in
+// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 
-include 'config/db.php';
-
-// Fetch all posts from database
-$sql = "SELECT * FROM posts ORDER BY created_at DESC";
-$result = mysqli_query($conn, $sql);
+// Fetch posts (with user join)
+$stmt = $conn->prepare("SELECT posts.id, posts.title, posts.content, posts.created_at FROM posts ORDER BY posts.created_at DESC");
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Post List</title>
+    <title>All Blog Posts</title>
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        table {
+            margin: 30px auto;
+            border-collapse: collapse;
+            width: 90%;
+        }
+        th, td {
+            border: 1px solid #999;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        a {
+            text-decoration: none;
+        }
+        .nav {
+            margin-top: 20px;
+        }
+        .nav a {
+            margin: 0 10px;
+        }
+    </style>
 </head>
 <body>
-    <h2>All Posts</h2>
 
-    <a href="create_post.php">+ Create New Post</a>
-    <a href="logout.php" style="float:right;">Logout</a>
+<div class="nav">
+    <a href="create_post.php" style="color:purple; font-weight:bold;">+ Create New Post</a> |
+    <a href="logout.php" style="color:red; font-weight:bold;">Logout</a>
+</div>
 
-    <table border="1" cellpadding="10" cellspacing="0" style="margin-top:10px;">
+<h2>All Blog Posts</h2>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Content</th>
+        <th>Created At</th>
+        <th>Actions</th>
+    </tr>
+
+    <?php while ($row = $result->fetch_assoc()): ?>
         <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Actions</th>
+            <td><?= htmlspecialchars($row['id']) ?></td>
+            <td><?= htmlspecialchars($row['title']) ?></td>
+            <td><?= htmlspecialchars(substr($row['content'], 0, 50)) ?>...</td>
+            <td><?= htmlspecialchars($row['created_at']) ?></td>
+            <td>
+                <a href="view_post.php?id=<?= $row['id'] ?>">View</a> |
+                <a href="edit_post.php?id=<?= $row['id'] ?>">Edit</a> |
+                <a href="delete_post.php?id=<?= $row['id'] ?>" onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
         </tr>
+    <?php endwhile; ?>
 
-        <?php if (mysqli_num_rows($result) > 0): ?>
-            <?php while ($row = mysqli_fetch_assoc($result)): ?>
-                <tr>
-                    <td><?php echo $row['id']; ?></td>
-                    <td><?php echo htmlspecialchars($row['title']); ?></td>
-                    <td>
-                        <a href="view_post.php?id=<?php echo $row['id']; ?>">View</a> |
-                        <a href="edit_post.php?id=<?php echo $row['id']; ?>">Edit</a> |
-                        <a href="delete_post.php?id=<?php echo $row['id']; ?>" onclick="return confirm('Are you sure you want to delete this post?');">Delete</a>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <tr>
-                <td colspan="3">No posts found.</td>
-            </tr>
-        <?php endif; ?>
-    </table>
+</table>
 
 </body>
 </html>
